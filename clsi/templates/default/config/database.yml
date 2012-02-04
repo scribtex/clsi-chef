@@ -1,0 +1,8 @@
+production:
+  adapter: mysql
+  host: localhost
+  database: <%= node[:clsi][:database][:name] %>
+  username: <%= node[:clsi][:database][:user] %>
+  password: <%= node[:clsi][:database][:password] %>
+  socket: /var/run/mysqld/mysqld.sock
+
