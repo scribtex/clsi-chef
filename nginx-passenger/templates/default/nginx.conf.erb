@@ -1,0 +1,36 @@
+user <%= node[:nginx][:user] %>;
+worker_processes  1;
+
+error_log <%= node[:nginx][:error_log_path] %>;
+pid       <%= node[:nginx][:pid_path] %>;
+
+events {
+    worker_connections  1024;
+}
+
+http {
+    passenger_root <%= `#{node[:ruby_enterprise][:install_dir]}/bin/passenger-config --root`.chomp %>;
+    passenger_ruby <%= node[:ruby_enterprise][:install_dir] %>/bin/ruby;
+
+    passenger_max_pool_size 12;
+    passenger_max_instances_per_app 8;
+    passenger_pool_idle_time 0;
+
+    include       mime.types;
+    default_type  application/octet-stream;
+
+    #log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+    #                  '$status $body_bytes_sent "$http_referer" '
+    #                  '"$http_user_agent" "$http_x_forwarded_for"';
+
+    access_log <%= node[:nginx][:http_log_path] %>;
+
+    sendfile    on;
+    tcp_nodelay on;
+    tcp_nopush  on;
+
+    keepalive_timeout  65;
+
+    include sites/*.conf;
+}
+

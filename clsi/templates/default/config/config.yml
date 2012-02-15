@@ -1,18 +1,19 @@
 production:
-  latex_chroot_dir: <%= node[:clsi][:install_directory] %>/shared/latexchroot
+  host:              localhost:3000
+  server_public_dir: <%= node[:clsi][:install_directory] %>/current/public
+  cache_dir:         <%= node[:clsi][:install_directory] %>/shared/cache
+  latex_chroot_dir:  <%= node[:clsi][:install_directory] %>/shared/latexchroot
   latex_compile_dir_relative_to_chroot: compiles
   latex_compile_dir: <%= node[:clsi][:install_directory] %>/shared/latexchroot/compiles
-  latex_command: /usr/texbin/latex
-  pdflatex_command: /usr/texbin/pdflatex
-  bibtex_command: /usr/texbin/bibtex
-  dvipdf_command: /usr/texbin/dvipdfmx
-  dvips_command: /usr/texbin/dvips
-  makeindex_command: /usr/texbin/makeindex
-  server_public_dir: <%= node[:clsi][:install_directory] %>/current/public
-  compile_timeout: 10
-  bibtex_timeout: 10
-  dvipdf_timeout: 10
-  dvips_timeout: 10
-  host: localhost:3000
+  latex_command:     <%= node[:clsi][:chrooted_binaries][:latex] %>
+  pdflatex_command:  <%= node[:clsi][:chrooted_binaries][:pdflatex] %>
+  xelatex_command:   <%= node[:clsi][:chrooted_binaries][:xelatex] %>
+  bibtex_command:    <%= node[:clsi][:chrooted_binaries][:bibtex] %>
+  makeindex_command: <%= node[:clsi][:chrooted_binaries][:makeindex] %>
+  dvipdf_command:    <%= node[:clsi][:chrooted_binaries][:dvipdf] %>
+  dvips_command:     <%= node[:clsi][:chrooted_binaries][:dvips] %>
+  compile_timeout:   20
+  bibtex_timeout:    10
+  dvipdf_timeout:    20
+  dvips_timeout:     10
   exception_notification_recipient: errors@examples.com
-  cache_dir: <%= node[:clsi][:install_directory] %>/shared/cache

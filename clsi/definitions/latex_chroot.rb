@@ -54,9 +54,11 @@ define :latex_chroot, :action => :create do
         end
       end
 
-      for binary_name in params[:system_binaries]
-        FileUtils.cp(location_of(binary_name), params[:chroot_bin_directory])
-        copy_libraries_for_binary(location_of(binary_name))
+      unless File.exist?(File.join(params[:chroot_bin_directory], params[:system_binaries][0]))
+        for binary_name in params[:system_binaries]
+          FileUtils.cp(location_of(binary_name), params[:chroot_bin_directory])
+          copy_libraries_for_binary(location_of(binary_name))
+        end
       end
     end
   end

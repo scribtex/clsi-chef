@@ -10,6 +10,10 @@ node.default[:clsi][:database][:name]     = "clsi"
 node.default[:clsi][:database][:user]     = "clsi"
 node.default[:clsi][:database][:password] = ""
 
+node.default[:clsi][:chrooted_binaries] = Hash[ ["pdflatex", "latex", "xelatex", "bibtex", "makeindex", "dvipdf", "dvips"].map{|n|
+  [n, "#{node[:clsi][:install_directory]}/shared/chrooted#{n}"]
+}]
+
 mysql_connection = ({:host => "localhost", :username => 'root', :password => node['mysql']['server_root_password']})
 
 # Set up the database
@@ -52,23 +56,43 @@ deploy_revision node[:clsi][:install_directory] do
     "config/config.yml"   => "config/config.yml",
     "config/mailer.yml"   => "config/mailer.yml"
   })
-  before_migrate do
-    directory "#{node[:clsi][:install_directory]}/shared/config" do
-      owner  node[:clsi][:user]
-    end
+end
 
-    template "#{node[:clsi][:install_directory]}/shared/config/database.yml" do
-      source "config/database.yml"
-      owner  node[:clsi][:user]
-    end
-    template "#{node[:clsi][:install_directory]}/shared/config/config.yml" do
-      source "config/config.yml"
-      owner  node[:clsi][:user]
-    end
-  end
+directory "#{node[:clsi][:install_directory]}/shared/config" do
+  owner  node[:clsi][:user]
+end
+
+template "#{node[:clsi][:install_directory]}/shared/config/database.yml" do
+  source "config/database.yml"
+  owner  node[:clsi][:user]
+end
+template "#{node[:clsi][:install_directory]}/shared/config/config.yml" do
+  source "config/config.yml"
+  owner  node[:clsi][:user]
 end
 
 latex_chroot "#{node[:clsi][:chroot_directory]}" do
   texlive_directory "/usr/local/texlive"
   owner             "www-data"
+end
+
+for binary_name, destination in node[:clsi][:chrooted_binaries]
+  execute "Build chrooted #{binary_name}" do
+    command "gcc #{node[:clsi][:install_directory]}/current/chrootedbinary.c -o #{destination} " +
+            "-DCHROOT_DIR='\"#{node[:clsi][:chroot_directory]}\"' -DCOMMAND='\"/usr/local/texlive/bin/i386-linux/#{binary_name}\"'"
+    creates destination
+  end
+
+  file destination do
+    owner "root"
+    group node[:clsi][:user]
+    mode  06750
+  end 
+end
+
+directory "#{File.dirname(node[:nginx][:conf_path])}/sites"
+ 
+template "#{File.dirname(node[:nginx][:conf_path])}/sites/clsi.conf" do
+  source   "nginx.conf"
+  notifies :restart, "service[nginx]" 
 end
