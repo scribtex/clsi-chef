@@ -4,6 +4,7 @@
 # Copyright 2012, ScribTeX
 
 node.default[:clsi][:install_directory]   = "/var/www/clsi"
+node.default[:clsi][:chroot_directory]    = File.join(node[:clsi][:install_directory], "/shared/latexchroot")
 node.default[:clsi][:user]                = "www-data"
 node.default[:clsi][:database][:name]     = "clsi"
 node.default[:clsi][:database][:user]     = "clsi"
@@ -36,7 +37,7 @@ directory node[:clsi][:install_directory] do
   recursive true
 end
 
-deploy node[:clsi][:install_directory] do
+deploy_revision node[:clsi][:install_directory] do
   repo     "git://github.com/scribtex/clsi.git"
   revision "master"
   user     node[:clsi][:user]
@@ -65,4 +66,9 @@ deploy node[:clsi][:install_directory] do
       owner  node[:clsi][:user]
     end
   end
+end
+
+latex_chroot "#{node[:clsi][:chroot_directory]}" do
+  texlive_directory "/usr/local/texlive"
+  owner             "www-data"
 end
