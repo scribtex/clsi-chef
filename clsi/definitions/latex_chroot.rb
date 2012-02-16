@@ -16,6 +16,11 @@ define :latex_chroot, :action => :create do
     creates File.join(chrooted_texlive_dir, "README")
   end
 
+  template File.join(chrooted_texlive_dir, "texmf.cnf") do
+    source "texmf.cnf"
+    owner  params[:owner]
+  end
+
   directory File.join(params[:chroot_root], "tmp") do
     owner params[:owner]
     mode 0777
