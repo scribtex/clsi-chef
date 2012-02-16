@@ -1,5 +1,5 @@
 production:
-  host:              localhost:3000
+  host:              <%= node[:clsi][:host] %>
   server_public_dir: <%= node[:clsi][:install_directory] %>/current/public
   cache_dir:         <%= node[:clsi][:install_directory] %>/shared/cache
   latex_chroot_dir:  <%= node[:clsi][:install_directory] %>/shared/latexchroot
