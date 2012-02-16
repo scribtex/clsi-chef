@@ -58,6 +58,9 @@ deploy_revision node[:clsi][:install_directory] do
   })
 end
 
+directory "#{node[:clsi][:install_directory]}/shared/log" do
+  owner  node[:clsi][:user]
+end
 directory "#{node[:clsi][:install_directory]}/shared/config" do
   owner  node[:clsi][:user]
 end
@@ -95,4 +98,9 @@ directory "#{File.dirname(node[:nginx][:conf_path])}/sites"
 template "#{File.dirname(node[:nginx][:conf_path])}/sites/clsi.conf" do
   source   "nginx.conf"
   notifies :restart, "service[nginx]" 
+end
+
+template "/etc/cron.hourly/clsi_clean_output_and_cache" do
+  source "clean_output_and_cache.cron"
+  mode   0755
 end

@@ -1,0 +1,5 @@
+#!/bin/sh
+cd <%= node[:clsi][:install_directory] %>/current
+rake clsi:clean_cache RAILS_ENV=production
+rake clsi:clean_output RAILS_ENV=production
+
