@@ -72,6 +72,7 @@ node.default[:nginx][:config_flags]   = [
   "--user=#{node[:nginx][:user]}",
   "--with-http_ssl_module"
 ]
+node.default[:nginx][:passenger_pool_size] = 8
 
 remote_file "#{Chef::Config[:file_cache_path]}/nginx-#{node[:nginx][:version]}.tar.gz" do
   source "http://nginx.org/download/nginx-#{node[:nginx][:version]}.tar.gz"
