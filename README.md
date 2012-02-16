@@ -31,6 +31,7 @@ You will need to write tell chef about some server specific configs, so in /var/
         "server_root_password" : "potatoes"
       },
       "clsi" : {
+        "host" : "clsi.example.com",
         "database" : {
           "name"     : "clsi",
           "user"     : "clsi",
