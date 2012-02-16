@@ -16,12 +16,18 @@ define :latex_chroot, :action => :create do
     creates File.join(chrooted_texlive_dir, "README")
   end
 
+  directory File.join(params[:chroot_root], "tmp") do
+    owner params[:owner]
+    mode 0777
+  end
   directory params[:chroot_lib_directory] do
     owner params[:owner]
   end
   directory params[:chroot_bin_directory] do
     owner params[:owner]
   end
+
+  package "ghostscript"
 
   ruby_block "Copy libraries and system binaries to Chroot" do
     block do
@@ -54,12 +60,45 @@ define :latex_chroot, :action => :create do
         end
       end
 
+      unless File.exist?(File.join(params[:chroot_root], "usr/bin")) 
+        relative_bin_dir = params[:binary_directory][(params[:chroot_root].length)..-1]
+        FileUtils.ln_s(File.join("/", relative_bin_dir), File.join(params[:chroot_root], "usr/bin"))
+      end
+
       unless File.exist?(File.join(params[:chroot_bin_directory], params[:system_binaries][0]))
         for binary_name in params[:system_binaries]
           FileUtils.cp(location_of(binary_name), params[:chroot_bin_directory])
           copy_libraries_for_binary(location_of(binary_name))
         end
       end
+
+      # Install ghostscript and dvipdf (comes with ghostscript) for converting dvi -> pdf
+      unless File.exist?(File.join(params[:chroot_bin_directory], "dvipdf"))
+        FileUtils.cp(location_of("dvipdf"), params[:chroot_bin_directory])
+      end
+
+      unless File.exist?(File.join(params[:chroot_bin_directory], "gs"))
+	FileUtils.cp(location_of('gs'), params[:chroot_bin_directory])
+	copy_libraries_for_binary(location_of('gs'))
+
+	status, stdout, stderr = systemu(['gs', '-h'])
+	directories = stdout.match(/^Search path:\n((?:   .*\n)*)/)[1]
+	directories.gsub!("\n", '')
+	directories.gsub!(/ *\: */, ':')
+	directories.strip!
+	directories = directories.split(":")
+	directories = directories[1..-1] # remove '.'
+	print "Installing ghostscript directories:\n"
+	for directory in directories
+	  if File.exist?(directory)
+	    print directory + "\n"
+	    chrooted_directory = File.join(params[:chroot_root], directory)
+	    FileUtils.mkdir_p(chrooted_directory)
+	    FileUtils.cp_r(directory, File.dirname(chrooted_directory))
+	  end
+	end
+      end
+
     end
   end
 end

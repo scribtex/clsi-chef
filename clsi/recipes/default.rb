@@ -80,10 +80,18 @@ latex_chroot "#{node[:clsi][:chroot_directory]}" do
 end
 
 for binary_name, destination in node[:clsi][:chrooted_binaries]
-  execute "Build chrooted #{binary_name}" do
-    command "gcc #{node[:clsi][:install_directory]}/current/chrootedbinary.c -o #{destination} " +
-            "-DCHROOT_DIR='\"#{node[:clsi][:chroot_directory]}\"' -DCOMMAND='\"/usr/local/texlive/bin/i386-linux/#{binary_name}\"'"
-    creates destination
+  if binary_name == "dvipdf"
+    execute "Build chrooted #{binary_name}" do
+      command "gcc #{node[:clsi][:install_directory]}/current/chrootedbinary.c -o #{destination} " +
+              "-DCHROOT_DIR='\"#{node[:clsi][:chroot_directory]}\"' -DCOMMAND='\"/bin/#{binary_name}\"'"
+      creates destination
+    end
+  else
+    execute "Build chrooted #{binary_name}" do
+      command "gcc #{node[:clsi][:install_directory]}/current/chrootedbinary.c -o #{destination} " +
+              "-DCHROOT_DIR='\"#{node[:clsi][:chroot_directory]}\"' -DCOMMAND='\"/usr/local/texlive/bin/i386-linux/#{binary_name}\"'"
+      creates destination
+    end
   end
 
   file destination do
