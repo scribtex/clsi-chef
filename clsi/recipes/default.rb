@@ -64,6 +64,9 @@ end
 directory "#{node[:clsi][:install_directory]}/shared/config" do
   owner  node[:clsi][:user]
 end
+file "#{node[:clsi][:install_directory]}/shared/log/production.log" do
+  owner  node[:clsi][:user]
+end
 
 template "#{node[:clsi][:install_directory]}/shared/config/database.yml" do
   source "config/database.yml"
