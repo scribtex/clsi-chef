@@ -125,3 +125,8 @@ template "/etc/cron.d/check_clsi" do
   source "cron.d/check_clsi.cron"
   mode   0755
 end
+
+template "/etc/logrotate.d/clsi" do
+  source "logrotate"
+  mode  0644
+end
