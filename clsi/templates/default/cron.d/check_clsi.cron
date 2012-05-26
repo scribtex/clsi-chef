@@ -1,0 +1,1 @@
+*/5 * * * * root ruby <%= node[:clsi][:install_directory] %>/shared/check.rb

@@ -43,7 +43,7 @@ end
 
 deploy_revision node[:clsi][:install_directory] do
   repo     "git://github.com/scribtex/clsi.git"
-  revision "master"
+  revision "v1.0.0"
   user     node[:clsi][:user]
 
   environment ({
@@ -113,5 +113,15 @@ end
 
 template "/etc/cron.hourly/clsi_clean_output_and_cache" do
   source "clean_output_and_cache.cron"
+  mode   0755
+end
+
+template "#{node[:clsi][:install_directory]}/shared/check.rb" do
+  source "check.rb"
+  mode   0755
+end
+
+template "/etc/cron.d/check_clsi" do
+  source "cron.d/check_clsi.cron"
   mode   0755
 end
