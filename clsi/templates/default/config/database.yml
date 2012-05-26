@@ -5,4 +5,5 @@ production:
   username: <%= node[:clsi][:database][:user] %>
   password: <%= node[:clsi][:database][:password] %>
   socket: /var/run/mysqld/mysqld.sock
+  reconnect: true
 
