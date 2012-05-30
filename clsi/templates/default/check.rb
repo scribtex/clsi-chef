@@ -3,6 +3,7 @@ require 'json'
 
 UP_FILE = "<%= node[:clsi][:install_directory] %>/current/public/up.html"
 RESTART_NGINX_COMMAND = '/etc/init.d/nginx restart'
+RESTART_MYSQL_COMMAND = '/etc/init.d/mysql restart'
 
 request = {
   :compile => {
@@ -17,8 +18,11 @@ request = {
 raw_response = `curl -s --data '#{request.to_json}' "http://<%= node[:clsi][:host] %>/clsi/compile?format=json"`
 
 def failed!
-  FileUtils.rm(UP_FILE)
+  if File.exist?(UP_FILE)
+    FileUtils.rm(UP_FILE)
+  end
   system(RESTART_NGINX_COMMAND)
+  system(RESTART_MYSQL_COMMAND)
 end
 
 def success!
