@@ -159,9 +159,9 @@ logrotate_app "nginx" do
   size     "5M"
 end
 
-include_recipe "monit"
-
-template "/etc/monit/conf.d/nginx" do
-	source   "monit"
-	notifies :restart, "service[monit]"
+if node[:monit]
+  template "/etc/monit/conf.d/nginx" do
+    source   "monit"
+    notifies :restart, "service[monit]"
+  end
 end

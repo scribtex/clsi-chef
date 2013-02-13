@@ -1,0 +1,5 @@
+{
+  "environment" : "production",
+  "run_list" : [ "mysql::server", "mysql::client", "clsi" ]
+}
+

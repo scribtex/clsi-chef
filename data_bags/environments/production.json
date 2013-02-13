@@ -1,0 +1,14 @@
+{
+  "id" : "production",
+  "clsi": {
+    "database": {
+      "name": "clsi",
+      "user": "clsi",
+      "password": "banana"
+    }
+  },
+  "mysql": {
+    "server_root_password": "apples"
+  }
+}
+  

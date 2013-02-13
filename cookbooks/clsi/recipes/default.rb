@@ -61,13 +61,10 @@ end
 
 # LaTeX environment
 # -----------------
+settings["clsi"]["latex"] ||= {
+  "method" => "package"
+}
 case settings["clsi"]["latex"]["method"]
-when "package"
-  package "texlive"
-  binary_path = "/usr/bin/"
-  node[:clsi][:latex_chroot_dir] = "#{node[:clsi][:install_directory]}/shared/latexchroot"
-  node[:clsi][:latex_compile_dir] = "#{node[:clsi][:latex_chroot_dir]}/compiles"
-  node[:clsi][:latex_compile_dir_relative_to_chroot] = node[:clsi][:latex_compile_dir]
 when "chroot"
   node[:clsi][:latex_chroot_dir] = "#{node[:clsi][:install_directory]}/shared/latexchroot"
   node[:clsi][:latex_compile_dir] = "#{node[:clsi][:latex_chroot_dir]}/compiles"
@@ -85,6 +82,12 @@ when "chroot"
       "RSYNC_PASSWORD" => settings["clsi"]["latex"]["rsync_password"]
     })
   end
+else
+  package "texlive"
+  binary_path = "/usr/bin/"
+  node[:clsi][:latex_chroot_dir] = "#{node[:clsi][:install_directory]}/shared/latexchroot"
+  node[:clsi][:latex_compile_dir] = "#{node[:clsi][:latex_chroot_dir]}/compiles"
+  node[:clsi][:latex_compile_dir_relative_to_chroot] = node[:clsi][:latex_compile_dir]
 end
 
 node[:clsi][:binaries] = Hash[
