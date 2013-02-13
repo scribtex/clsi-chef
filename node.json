@@ -1,6 +1,17 @@
 {
   "host": "clsi.example.com",
-  "environment" : "production",
+  "mysql" : {
+    "server_root_password": "apple",
+    "server_repl_password": "apple",
+    "server_debian_password": "apple",
+  },
+  "clsi": {
+    "database": {
+      "name": "clsi",
+      "user": "clsi",
+      "password": "banana"
+    }
+  }
   "run_list" : [ "mysql::server", "mysql::client", "clsi" ]
 }
 

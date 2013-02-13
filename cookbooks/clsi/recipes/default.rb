@@ -1,17 +1,25 @@
 # Cookbook Name:: clsi
 # Recipe:: default
 #
-# Copyright 2012, ScribTeX
-node.default[:environment] = "production"
-settings = data_bag_item("environments", node[:environment]).to_hash
+# Copyright 2013, James Allen, ShareLaTeX
+
+if node[:environment]
+  # We are using data bags
+  settings = data_bag_item("environments", node[:environment]).to_hash
+  node.default[:clsi][:database][:name]       = settings["clsi"]["database"]["name"]
+  node.default[:clsi][:database][:user]       = settings["clsi"]["database"]["user"]
+  node.default[:clsi][:database][:password]   = settings["clsi"]["database"]["password"]
+  node.default[:clsi][:latex][:method]        = settings["clsi"]["latex"]["method"] || "package"
+  node.default[:clsi][:latex][:source]        = settings["clsi"]["latex"]["source"]
+  node.default[:clsi][:latex][:identity_file] = settings["clsi"]["latex"]["identity_file"]
+  node.default[:mysql][:server_root_password] = settings["mysql"]["server_root_password"]
+else
+  node.default[:clsi][:latex][:method] = "package"
+end
 
 node.default[:clsi][:install_directory]   = "/var/www/clsi"
 node.default[:clsi][:user]                = "www-data"
-node.default[:clsi][:database][:name]     = settings["clsi"]["database"]["name"]
-node.default[:clsi][:database][:user]     = settings["clsi"]["database"]["user"]
-node.default[:clsi][:database][:password] = settings["clsi"]["database"]["password"]
 
-node.default[:mysql][:server_root_password] = settings["mysql"]["server_root_password"]
 
 include_recipe "nginx-passenger"
 package "rubygems"
@@ -61,10 +69,7 @@ end
 
 # LaTeX environment
 # -----------------
-settings["clsi"]["latex"] ||= {
-  "method" => "package"
-}
-case settings["clsi"]["latex"]["method"]
+case node[:clsi][:latex][:method]
 when "chroot"
   node[:clsi][:latex_chroot_dir] = "#{node[:clsi][:install_directory]}/shared/latexchroot"
   node[:clsi][:latex_compile_dir] = "#{node[:clsi][:latex_chroot_dir]}/compiles"
@@ -74,12 +79,12 @@ when "chroot"
   execute "Syncing latexchoot" do
     command [
       "rsync", "-av", "--delete",
-      "-e", "'ssh -i #{settings["clsi"]["latex"]["identity_file"]}'",
-      settings["clsi"]["latex"]["source"] + "/",
+      "-e", "'ssh -i #{node[:clsi][:latex][:identity_file]}'",
+      node[:clsi][:latex][:source] + "/",
       node[:clsi][:latex_chroot_dir] + "/"
     ].join(" ")
     environment ({
-      "RSYNC_PASSWORD" => settings["clsi"]["latex"]["rsync_password"]
+      "RSYNC_PASSWORD" => node[:clsi][:latex][:rsync_password]
     })
   end
 else
@@ -98,7 +103,7 @@ node[:clsi][:binaries] = Hash[
   }
 ]
 
-if settings["clsi"]["latex"]["method"] == "chroot"
+if node[:clsi][:latex][:method] == "chroot"
   for binary_name, destination in node[:clsi][:binaries]
     if binary_name == "dvipdf"
       execute "Build chrooted #{binary_name}" do
