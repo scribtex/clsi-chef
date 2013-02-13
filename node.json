@@ -1,16 +1,16 @@
 {
-  "host": "clsi.example.com",
-  "mysql" : {
-    "server_root_password": "apple",
-    "server_repl_password": "apple",
-    "server_debian_password": "apple"
-  },
   "clsi": {
+    "host": "clsi.example.com",
     "database": {
       "name": "clsi",
       "user": "clsi",
       "password": "banana"
     }
+  },
+  "mysql" : {
+    "server_root_password": "apple",
+    "server_repl_password": "apple",
+    "server_debian_password": "apple"
   },
   "run_list" : [ "mysql::server", "mysql::client", "clsi" ]
 }

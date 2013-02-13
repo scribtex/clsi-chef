@@ -8,7 +8,10 @@ running an instance of the Common LaTeX Service Interface.
 Usage
 -----
 
-On a fresh install of Ubuntu 10.04, run the following commands as root to install chef
+*Note that only Ubuntu 12.04 is currently supported. This configuration may well work with
+other systems but it hasn't been tested*
+
+On a fresh install of Ubuntu 12.04, run the following commands as root to install chef
 and some necessary utilities: 
 
     echo "deb http://apt.opscode.com/ `lsb_release -cs`-0.10 main" | tee /etc/apt/sources.list.d/opscode.list
@@ -19,16 +22,17 @@ and some necessary utilities:
     apt-get upgrade
     apt-get install chef git-core build-essential
     
-Now checkout this repository to your chef directory:
+Now checkout this repository to a directory of your choice:
 
-    cd /var/chef
-    git clone git://github.com/scribtex/clsi-chef.git cookbooks
+    git clone git://github.com/scribtex/clsi-chef.git
 
-You will need to write tell chef about some server specific configs, so in /var/chef/clsi.json write:
+You will need to write tell chef about some server specific configs. Modify node.json:
 
     {
       "mysql" : {
-        "server_root_password" : "potatoes"
+        "server_root_password" : "potatoes",
+        "server_repl_password" : "potatoes",
+        "server_debian_password" : "potatoes"
       },
       "clsi" : {
         "host" : "clsi.example.com",
@@ -41,7 +45,11 @@ You will need to write tell chef about some server specific configs, so in /var/
       "run_list" : [ "mysql::server", "mysql::client", "clsi" ]
     }
 
-Then finally run chef to set up the server (this may take a long time the first time since 
-TexLive needs to be downloaded:
+Hopefully the meaning of these attributes is clear. `clsi.host` should be set to where your server
+can be found, either an IP address or the DNS entry. This is used to tell clients where they can
+find the resources that have been generated.
 
-    chef-solo -j clsi.json
+Then finally run chef to set up the server (this may take a long time the first time since 
+TexLive needs to be downloaded, and nginx and ruby-enterprise compiled):
+
+    chef-solo -j node.json -c solo.rb
