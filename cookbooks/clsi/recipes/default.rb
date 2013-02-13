@@ -9,6 +9,7 @@ if node[:environment]
   node.default[:clsi][:database][:name]       = settings["clsi"]["database"]["name"]
   node.default[:clsi][:database][:user]       = settings["clsi"]["database"]["user"]
   node.default[:clsi][:database][:password]   = settings["clsi"]["database"]["password"]
+  node.default[:clsi][:token]                 = settings["clsi"]["token"]
   node.default[:clsi][:latex][:method]        = settings["clsi"]["latex"]["method"] || "package"
   node.default[:clsi][:latex][:source]        = settings["clsi"]["latex"]["source"]
   node.default[:clsi][:latex][:identity_file] = settings["clsi"]["latex"]["identity_file"]
@@ -19,7 +20,6 @@ end
 
 node.default[:clsi][:install_directory]   = "/var/www/clsi"
 node.default[:clsi][:user]                = "www-data"
-
 
 include_recipe "nginx-passenger"
 package "rubygems"
