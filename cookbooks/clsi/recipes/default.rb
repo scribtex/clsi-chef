@@ -51,6 +51,11 @@ directory node[:clsi][:install_directory] do
   owner     node[:clsi][:user]
   recursive true
 end
+directory "#{node[:clsi][:install_directory]}/shared" do
+  owner  node[:clsi][:user]
+  recursive true
+end
+
 
 directory "#{node[:clsi][:install_directory]}/shared/log" do
   owner  node[:clsi][:user]
