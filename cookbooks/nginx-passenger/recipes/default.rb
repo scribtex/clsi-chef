@@ -12,13 +12,14 @@
 ##########################
 
 # required packages for install
-package "libreadline5-dev"
+package "libreadline-dev"
 package "build-essential"
 package "libssl-dev"
 
-node.default[:ruby_enterprise][:version] = "1.8.7-2011.03"
+node.default[:ruby_enterprise][:version] = "1.8.7-2012.02"
 node.default[:ruby_enterprise][:src_dir] = "#{Chef::Config[:file_cache_path]}/ruby-enterprise-#{node[:ruby_enterprise][:version]}"
 node.default[:ruby_enterprise][:install_dir] = "/opt/ruby-enterprise-#{node[:ruby_enterprise][:version]}"
+node.default[:ruby_enterprise][:gem_binary] = "#{node[:ruby_enterprise][:install_dir]}/bin/gem"
 
 remote_file "#{Chef::Config[:file_cache_path]}/ruby-enterprise-#{node[:ruby_enterprise][:version]}.tar.gz" do
   source "http://rubyenterpriseedition.googlecode.com/files/ruby-enterprise-#{node[:ruby_enterprise][:version]}.tar.gz"
@@ -31,6 +32,28 @@ ruby_enterprise_src_dir = bash "extract_ruby_enterprise_source" do
     tar zxf ruby-enterprise-#{node[:ruby_enterprise][:version]}.tar.gz
   EOH
   creates node[:ruby_enterprise][:src_dir]
+end
+
+# Note that you may need to add in the 'volatile' key word to one of the source
+# files before it will compile:
+# http://code.google.com/p/rubyenterpriseedition/issues/detail?id=74
+file "#{node[:ruby_enterprise][:src_dir]}/volatile_patch.diff" do
+	content <<-EOS
+--- source/distro/google-perftools-1.7/src/tcmalloc.cc 2012-02-19 14:09:11.000000000 +0000
++++ source/distro/google-perftools-1.7/src/tcmalloc.cc.new 2013-02-12 11:57:47.000000000 +0000
+@@ -1669,5 +1669,5 @@
+   MallocHook::InvokeNewHook(result, size);
+   return result;
+ }
+-void *(*__memalign_hook)(size_t, size_t, const void *) = MemalignOverride;
++void *(* volatile __memalign_hook)(size_t, size_t, const void *) = MemalignOverride;
+ #endif  // #ifndef TCMALLOC_FOR_DEBUGALLOCATION
+EOS
+end
+execute "Patch ruby enterprise installer" do
+  command "patch -p0 --forward < volatile_patch.diff"
+  cwd     node[:ruby_enterprise][:src_dir]
+  returns [0, 1]
 end
 
 execute "install_ruby_enterprise" do
@@ -53,14 +76,14 @@ package "ruby1.8-dev"
 # Fetch the nginx sources #
 ###########################
 
-node.default[:nginx][:version] = "1.0.12"
+node.default[:nginx][:version] = "1.2.6"
 node.default[:nginx][:src_dir] = "#{Chef::Config[:file_cache_path]}/nginx-#{node[:nginx][:version]}"
 node.default[:nginx][:installer]      = "#{node[:ruby_enterprise][:install_dir]}/bin/passenger-install-nginx-module"
 node.default[:nginx][:install_path]   = "/opt/nginx-#{node[:nginx][:version]}"
 node.default[:nginx][:binary_path]    = node[:nginx][:install_path] + "/sbin/nginx"
-node.default[:nginx][:error_log_path] = node[:nginx][:install_path] + "/logs/error.log"
-node.default[:nginx][:http_log_path]  = node[:nginx][:install_path] + "/logs/access.log"
-node.default[:nginx][:pid_path]       = node[:nginx][:install_path] + "/logs/nginx.pid"
+node.default[:nginx][:error_log_path] = "/var/log/nginx/error.log"
+node.default[:nginx][:http_log_path]  = "/var/log/nginx/access.log"
+node.default[:nginx][:pid_path]       = "/var/run/nginx.pid"
 node.default[:nginx][:conf_path]      = node[:nginx][:install_path] + "/conf/nginx.conf"
 node.default[:nginx][:user]           = "www-data"
 node.default[:nginx][:config_flags]   = [
@@ -134,4 +157,11 @@ logrotate_app "nginx" do
   path     "#{node[:nginx][:install_path]}/logs/access.log"
   rotate   7
   size     "5M"
+end
+
+include_recipe "monit"
+
+template "/etc/monit/conf.d/nginx" do
+	source   "monit"
+	notifies :restart, "service[monit]"
 end

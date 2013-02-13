@@ -2,21 +2,26 @@
 # Recipe:: default
 #
 # Copyright 2012, ScribTeX
+node.default[:environment] = "production"
+settings = data_bag_item("environments", node[:environment]).to_hash
 
 node.default[:clsi][:install_directory]   = "/var/www/clsi"
-node.default[:clsi][:chroot_directory]    = File.join(node[:clsi][:install_directory], "/shared/latexchroot")
 node.default[:clsi][:user]                = "www-data"
-node.default[:clsi][:database][:name]     = "clsi"
-node.default[:clsi][:database][:user]     = "clsi"
-node.default[:clsi][:database][:password] = ""
+node.default[:clsi][:database][:name]     = settings["clsi"]["database"]["name"]
+node.default[:clsi][:database][:user]     = settings["clsi"]["database"]["user"]
+node.default[:clsi][:database][:password] = settings["clsi"]["database"]["password"]
 
-node.default[:clsi][:chrooted_binaries] = Hash[ ["pdflatex", "latex", "xelatex", "bibtex", "makeindex", "dvipdf", "dvips"].map{|n|
-  [n, "#{node[:clsi][:install_directory]}/shared/chrooted#{n}"]
-}]
+node.default[:mysql][:server_root_password] = settings["mysql"]["server_root_password"]
+
+include_recipe "nginx-passenger"
+package "rubygems"
+
+# Database
+# --------
+gem_package "mysql"
 
 mysql_connection = ({:host => "localhost", :username => 'root', :password => node['mysql']['server_root_password']})
 
-# Set up the database
 mysql_database node[:clsi][:database][:name] do
   connection mysql_connection
   action     :create
@@ -28,18 +33,122 @@ mysql_database_user node[:clsi][:database][:user] do
   action     :grant
 end
 
-package "git-core"
 
-if node[:clsi][:user] == "www-data" then
-  directory "/var/www" do
-    owner "www-data"
-  end
-end
+# Set up directories
+# ------------------
+
+package "git-core"
 
 directory node[:clsi][:install_directory] do
   owner     node[:clsi][:user]
   recursive true
 end
+
+directory "#{node[:clsi][:install_directory]}/shared/log" do
+  owner  node[:clsi][:user]
+  recursive true
+end
+
+directory "#{node[:clsi][:install_directory]}/shared/config" do
+  owner  node[:clsi][:user]
+  recursive true
+end
+
+directory "#{node[:clsi][:install_directory]}/shared/latexchroot" do
+  owner  node[:clsi][:user]
+  recursive true
+end
+
+# LaTeX environment
+# -----------------
+case settings["clsi"]["latex"]["method"]
+when "package"
+  package "texlive"
+  binary_path = "/usr/bin/"
+  node[:clsi][:latex_chroot_dir] = "#{node[:clsi][:install_directory]}/shared/latexchroot"
+  node[:clsi][:latex_compile_dir] = "#{node[:clsi][:latex_chroot_dir]}/compiles"
+  node[:clsi][:latex_compile_dir_relative_to_chroot] = node[:clsi][:latex_compile_dir]
+when "chroot"
+  node[:clsi][:latex_chroot_dir] = "#{node[:clsi][:install_directory]}/shared/latexchroot"
+  node[:clsi][:latex_compile_dir] = "#{node[:clsi][:latex_chroot_dir]}/compiles"
+  node[:clsi][:latex_compile_dir_relative_to_chroot] = "compiles"
+  binary_path = "#{node[:clsi][:install_directory]}/shared/chrooted"
+
+  execute "Syncing latexchoot" do
+    command [
+      "rsync", "-av", "--delete",
+      "-e", "'ssh -i #{settings["clsi"]["latex"]["identity_file"]}'",
+      settings["clsi"]["latex"]["source"] + "/",
+      node[:clsi][:latex_chroot_dir] + "/"
+    ].join(" ")
+    environment ({
+      "RSYNC_PASSWORD" => settings["clsi"]["latex"]["rsync_password"]
+    })
+  end
+end
+
+node[:clsi][:binaries] = Hash[
+  [
+    "pdflatex", "latex", "xelatex", "bibtex", "makeindex", "dvipdf", "dvips"
+  ].map{ |n|
+    [n, "#{binary_path}#{n}"]
+  }
+]
+
+if settings["clsi"]["latex"]["method"] == "chroot"
+  for binary_name, destination in node[:clsi][:binaries]
+    if binary_name == "dvipdf"
+      execute "Build chrooted #{binary_name}" do
+        command "gcc #{node[:clsi][:install_directory]}/current/chrootedbinary.c -o #{destination} " +
+                "-DCHROOT_DIR='\"#{node[:clsi][:chroot_directory]}\"' -DCOMMAND='\"/bin/#{binary_name}\"'"
+        creates destination
+      end
+    else
+      execute "Build chrooted #{binary_name}" do
+        command "gcc #{node[:clsi][:install_directory]}/current/chrootedbinary.c -o #{destination} " +
+                "-DCHROOT_DIR='\"#{node[:clsi][:chroot_directory]}\"' -DCOMMAND='\"/usr/local/texlive/bin/i386-linux/#{binary_name}\"'"
+        creates destination
+      end
+    end
+
+    file destination do
+      owner "root"
+      group node[:clsi][:user]
+      mode  06750
+    end 
+  end
+end
+
+# Deploy CLSI Rails app
+# ---------------------
+template "#{node[:clsi][:install_directory]}/shared/config/database.yml" do
+  source "config/database.yml"
+  owner  node[:clsi][:user]
+end
+template "#{node[:clsi][:install_directory]}/shared/config/config.yml" do
+  source "config/config.yml"
+  owner  node[:clsi][:user]
+end
+file "#{node[:clsi][:install_directory]}/shared/log/production.log" do
+  owner  node[:clsi][:user]
+end
+
+gem_package "rake" do
+	version "0.9.2.2"
+end
+gem_package "rack" do
+	version "1.1.3"
+end
+
+gem_package "rake" do
+	version "0.9.2.2"
+  gem_binary node[:ruby_enterprise][:gem_binary]
+end
+gem_package "rack" do
+	version "1.1.3"
+  gem_binary node[:ruby_enterprise][:gem_binary]
+end
+
 
 deploy_revision node[:clsi][:install_directory] do
   repo     "git://github.com/scribtex/clsi.git"
@@ -58,51 +167,8 @@ deploy_revision node[:clsi][:install_directory] do
   })
 end
 
-directory "#{node[:clsi][:install_directory]}/shared/log" do
-  owner  node[:clsi][:user]
-end
-directory "#{node[:clsi][:install_directory]}/shared/config" do
-  owner  node[:clsi][:user]
-end
-file "#{node[:clsi][:install_directory]}/shared/log/production.log" do
-  owner  node[:clsi][:user]
-end
-
-template "#{node[:clsi][:install_directory]}/shared/config/database.yml" do
-  source "config/database.yml"
-  owner  node[:clsi][:user]
-end
-template "#{node[:clsi][:install_directory]}/shared/config/config.yml" do
-  source "config/config.yml"
-  owner  node[:clsi][:user]
-end
-
-latex_chroot "#{node[:clsi][:chroot_directory]}" do
-  texlive_directory "/usr/local/texlive"
-  owner             "www-data"
-end
-
-for binary_name, destination in node[:clsi][:chrooted_binaries]
-  if binary_name == "dvipdf"
-    execute "Build chrooted #{binary_name}" do
-      command "gcc #{node[:clsi][:install_directory]}/current/chrootedbinary.c -o #{destination} " +
-              "-DCHROOT_DIR='\"#{node[:clsi][:chroot_directory]}\"' -DCOMMAND='\"/bin/#{binary_name}\"'"
-      creates destination
-    end
-  else
-    execute "Build chrooted #{binary_name}" do
-      command "gcc #{node[:clsi][:install_directory]}/current/chrootedbinary.c -o #{destination} " +
-              "-DCHROOT_DIR='\"#{node[:clsi][:chroot_directory]}\"' -DCOMMAND='\"/usr/local/texlive/bin/i386-linux/#{binary_name}\"'"
-      creates destination
-    end
-  end
-
-  file destination do
-    owner "root"
-    group node[:clsi][:user]
-    mode  06750
-  end 
-end
+# Nginx and Passenger
+# -------------------
 
 directory "#{File.dirname(node[:nginx][:conf_path])}/sites"
  
@@ -111,6 +177,8 @@ template "#{File.dirname(node[:nginx][:conf_path])}/sites/clsi.conf" do
   notifies :restart, "service[nginx]" 
 end
 
+# Logging and monitoring
+# ----------------------
 template "/etc/cron.hourly/clsi_clean_output_and_cache" do
   source "clean_output_and_cache.cron"
   mode   0755

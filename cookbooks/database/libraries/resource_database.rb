@@ -46,52 +46,64 @@ class Chef
         )
       end
 
-      def sql(arg=nil)
+      def sql(arg=nil, &block)
+        arg ||= block
         set_or_return(
           :sql,
           arg,
-          :kind_of => String
+          :kind_of => [String, Proc]
         )
       end
 
-      def sql(arg=nil)
-        set_or_return(
-          :sql,
-          arg,
-          :kind_of => String
-        )
+      def sql_query
+        if sql.kind_of?(Proc)
+          sql.call
+        else
+          sql
+        end
       end
 
-      # 
-      def template(arg='DEFAULT')
+      def template(arg=nil)
         set_or_return(
           :template,
           arg,
+          :kind_of => String,
+          :default => 'DEFAULT'
+        )
+      end
+
+      def collation(arg=nil)
+        set_or_return(
+          :collation,
+          arg,
           :kind_of => String
         )
       end
 
-      def encoding(arg='DEFAULT')
+      def encoding(arg=nil)
         set_or_return(
           :encoding,
           arg,
-          :kind_of => String
+          :kind_of => String,
+          :default => 'DEFAULT'
         )
       end
 
-      def tablespace(arg='DEFAULT')
+      def tablespace(arg=nil)
         set_or_return(
           :tablespace,
           arg,
-          :kind_of => String
+          :kind_of => String,
+          :default => 'DEFAULT'
         )
       end
 
-      def connection_limit(arg='-1')
+      def connection_limit(arg=nil)
         set_or_return(
           :connection_limit,
           arg,
-          :kind_of => String
+          :kind_of => String,
+          :default => '-1'
         )
       end
 
