@@ -1,6 +1,7 @@
 {
   "clsi": {
     "host": "clsi.example.com",
+    "token": "clsi-token",
     "database": {
       "name": "clsi",
       "user": "clsi",

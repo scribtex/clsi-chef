@@ -147,25 +147,25 @@ file "#{node[:clsi][:install_directory]}/shared/log/production.log" do
 end
 
 gem_package "rake" do
-	version "0.9.2.2"
+  version "0.9.2.2"
 end
 gem_package "rack" do
-	version "1.1.3"
+  version "1.1.3"
 end
 
 gem_package "rake" do
-	version "0.9.2.2"
+  version "0.9.2.2"
   gem_binary node[:ruby_enterprise][:gem_binary]
 end
 gem_package "rack" do
-	version "1.1.3"
+  version "1.1.3"
   gem_binary node[:ruby_enterprise][:gem_binary]
 end
 
 
 deploy_revision node[:clsi][:install_directory] do
   repo     "git://github.com/scribtex/clsi.git"
-  revision "v1.1.3"
+  revision "v1.1.4"
   user     node[:clsi][:user]
 
   environment ({
@@ -179,6 +179,14 @@ deploy_revision node[:clsi][:install_directory] do
     "config/mailer.yml"   => "config/mailer.yml"
   })
 end
+
+execute "Creating user for CLSI" do
+  command "#{node[:clsi][:install_directory]}/current/script/runner #{node[:clsi][:install_directory]}/current/script/ensure_token_exists '#{node[:clsi][:token]}'"
+  environment ({
+    "RAILS_ENV" => "production"
+  })
+end
+
 
 # Nginx and Passenger
 # -------------------
