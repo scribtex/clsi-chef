@@ -43,7 +43,7 @@ You will need to write tell chef about some server specific configs. Modify node
         "server_repl_password" : "potatoes",
         "server_debian_password" : "potatoes"
       },
-      "run_list" : [ "mysql::server", "mysql::client", "clsi" ]
+      "run_list" : [ "mysql::server", "mysql::client", "mysql::ruby", "clsi" ]
     }
 
 Hopefully the meaning of these attributes is clear. `clsi.host` should be set to where your server
