@@ -26,8 +26,6 @@ package "rubygems"
 
 # Database
 # --------
-gem_package "mysql"
-
 mysql_connection = ({:host => "localhost", :username => 'root', :password => node['mysql']['server_root_password']})
 
 mysql_database node[:clsi][:database][:name] do
@@ -76,9 +74,9 @@ end
 # -----------------
 case node[:clsi][:latex][:method]
 when "chroot"
-  node[:clsi][:latex_chroot_dir] = "#{node[:clsi][:install_directory]}/shared/latexchroot"
-  node[:clsi][:latex_compile_dir] = "#{node[:clsi][:latex_chroot_dir]}/compiles"
-  node[:clsi][:latex_compile_dir_relative_to_chroot] = "compiles"
+  node.default[:clsi][:latex_chroot_dir] = "#{node[:clsi][:install_directory]}/shared/latexchroot"
+  node.default[:clsi][:latex_compile_dir] = "#{node[:clsi][:latex_chroot_dir]}/compiles"
+  node.default[:clsi][:latex_compile_dir_relative_to_chroot] = "compiles"
   binary_path = "#{node[:clsi][:install_directory]}/shared/chrooted"
 
   execute "Syncing latexchoot" do
@@ -88,49 +86,26 @@ when "chroot"
       node[:clsi][:latex][:source] + "/",
       node[:clsi][:latex_chroot_dir] + "/"
     ].join(" ")
-    environment ({
-      "RSYNC_PASSWORD" => node[:clsi][:latex][:rsync_password]
-    })
+  end
+
+  execute "Setting latexchroot owner" do
+    command "chown -R #{node[:clsi][:user]}:#{node[:clsi][:user]} #{node[:clsi][:latex_chroot_dir]}"
   end
 else
   package "texlive"
   binary_path = "/usr/bin/"
-  node[:clsi][:latex_chroot_dir] = "#{node[:clsi][:install_directory]}/shared/latexchroot"
-  node[:clsi][:latex_compile_dir] = "#{node[:clsi][:latex_chroot_dir]}/compiles"
-  node[:clsi][:latex_compile_dir_relative_to_chroot] = node[:clsi][:latex_compile_dir]
+  node.default[:clsi][:latex_chroot_dir] = "#{node[:clsi][:install_directory]}/shared/latexchroot"
+  node.default[:clsi][:latex_compile_dir] = "#{node[:clsi][:latex_chroot_dir]}/compiles"
+  node.default[:clsi][:latex_compile_dir_relative_to_chroot] = node[:clsi][:latex_compile_dir]
 end
 
-node[:clsi][:binaries] = Hash[
+node.default[:clsi][:binaries] = Hash[
   [
     "pdflatex", "latex", "xelatex", "bibtex", "makeindex", "dvipdf", "dvips"
   ].map{ |n|
     [n, "#{binary_path}#{n}"]
   }
 ]
-
-if node[:clsi][:latex][:method] == "chroot"
-  for binary_name, destination in node[:clsi][:binaries]
-    if binary_name == "dvipdf"
-      execute "Build chrooted #{binary_name}" do
-        command "gcc #{node[:clsi][:install_directory]}/current/chrootedbinary.c -o #{destination} " +
-                "-DCHROOT_DIR='\"#{node[:clsi][:chroot_directory]}\"' -DCOMMAND='\"/bin/#{binary_name}\"'"
-        creates destination
-      end
-    else
-      execute "Build chrooted #{binary_name}" do
-        command "gcc #{node[:clsi][:install_directory]}/current/chrootedbinary.c -o #{destination} " +
-                "-DCHROOT_DIR='\"#{node[:clsi][:chroot_directory]}\"' -DCOMMAND='\"/usr/local/texlive/bin/i386-linux/#{binary_name}\"'"
-        creates destination
-      end
-    end
-
-    file destination do
-      owner "root"
-      group node[:clsi][:user]
-      mode  06750
-    end 
-  end
-end
 
 # Deploy CLSI Rails app
 # ---------------------
@@ -152,6 +127,7 @@ end
 gem_package "rack" do
   version "1.1.3"
 end
+gem_package "mysql"
 
 gem_package "rake" do
   version "0.9.2.2"
@@ -161,11 +137,14 @@ gem_package "rack" do
   version "1.1.3"
   gem_binary node[:ruby_enterprise][:gem_binary]
 end
+gem_package "mysql" do
+  gem_binary node[:ruby_enterprise][:gem_binary]
+end
 
 
 deploy_revision node[:clsi][:install_directory] do
   repo     "git://github.com/scribtex/clsi.git"
-  revision "v1.1.4"
+  revision "v1.1.5"
   user     node[:clsi][:user]
 
   environment ({
@@ -186,6 +165,31 @@ execute "Creating user for CLSI" do
     "RAILS_ENV" => "production"
   })
 end
+
+if node[:clsi][:latex][:method] == "chroot"
+  for binary_name, destination in node[:clsi][:binaries]
+    if binary_name == "dvipdf"
+      execute "Build chrooted #{binary_name}" do
+        command "gcc #{node[:clsi][:install_directory]}/current/chrootedbinary.c -o #{destination} " +
+                "-DCHROOT_DIR='\"#{node[:clsi][:latex_chroot_dir]}\"' -DCOMMAND='\"/bin/#{binary_name}\"'"
+        creates destination
+      end
+    else
+      execute "Build chrooted #{binary_name}" do
+        command "gcc #{node[:clsi][:install_directory]}/current/chrootedbinary.c -o #{destination} " +
+                "-DCHROOT_DIR='\"#{node[:clsi][:latex_chroot_dir]}\"' -DCOMMAND='\"/usr/local/texlive/bin/i386-linux/#{binary_name}\"'"
+        creates destination
+      end
+    end
+
+    file destination do
+      owner "root"
+      group node[:clsi][:user]
+      mode  06750
+    end 
+  end
+end
+
 
 
 # Nginx and Passenger
