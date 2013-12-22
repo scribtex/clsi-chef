@@ -13,6 +13,6 @@
     "server_repl_password": "apple",
     "server_debian_password": "apple"
   },
-  "run_list" : [ "mysql::server", "mysql::client", "clsi" ]
+  "run_list" : [ "mysql::server", "mysql::client", "mysql::ruby", "clsi" ]
 }
 
