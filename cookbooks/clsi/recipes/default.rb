@@ -144,7 +144,7 @@ end
 
 deploy_revision node[:clsi][:install_directory] do
   repo     "git://github.com/scribtex/clsi.git"
-  revision "v1.1.5"
+  revision "v1.1.6"
   user     node[:clsi][:user]
 
   environment ({
