@@ -76,7 +76,7 @@ package "ruby1.8-dev"
 # Fetch the nginx sources #
 ###########################
 
-node.default[:nginx][:version] = "1.2.6"
+node.default[:nginx][:version] = "1.4.0"
 node.default[:nginx][:src_dir] = "#{Chef::Config[:file_cache_path]}/nginx-#{node[:nginx][:version]}"
 node.default[:nginx][:installer]      = "#{node[:ruby_enterprise][:install_dir]}/bin/passenger-install-nginx-module"
 node.default[:nginx][:install_path]   = "/opt/nginx-#{node[:nginx][:version]}"

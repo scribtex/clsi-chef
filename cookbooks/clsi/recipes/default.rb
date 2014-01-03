@@ -92,7 +92,7 @@ when "chroot"
     command "chown -R #{node[:clsi][:user]}:#{node[:clsi][:user]} #{node[:clsi][:latex_chroot_dir]}"
   end
 else
-  package "texlive"
+  package "texlive-full"
   binary_path = "/usr/bin/"
   node.default[:clsi][:latex_chroot_dir] = "#{node[:clsi][:install_directory]}/shared/latexchroot"
   node.default[:clsi][:latex_compile_dir] = "#{node[:clsi][:latex_chroot_dir]}/compiles"
@@ -144,7 +144,7 @@ end
 
 deploy_revision node[:clsi][:install_directory] do
   repo     "git://github.com/scribtex/clsi.git"
-  revision "v1.1.5"
+  revision "v1.1.6"
   user     node[:clsi][:user]
 
   environment ({
