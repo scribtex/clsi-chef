@@ -101,7 +101,7 @@ end
 
 node.default[:clsi][:binaries] = Hash[
   [
-    "pdflatex", "latex", "xelatex", "bibtex", "makeindex", "dvipdf", "dvips"
+    "pdflatex", "latex", "xelatex", "lualatex", "bibtex", "makeindex", "dvipdf", "dvips"
   ].map{ |n|
     [n, "#{binary_path}#{n}"]
   }

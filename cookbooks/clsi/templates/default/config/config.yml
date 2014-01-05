@@ -8,6 +8,7 @@ production:
   latex_command:     <%= node[:clsi][:binaries][:latex] %>
   pdflatex_command:  <%= node[:clsi][:binaries][:pdflatex] %>
   xelatex_command:   <%= node[:clsi][:binaries][:xelatex] %>
+  lualatex_command:   <%= node[:clsi][:binaries][:lualatex] %>
   bibtex_command:    <%= node[:clsi][:binaries][:bibtex] %>
   makeindex_command: <%= node[:clsi][:binaries][:makeindex] %>
   dvipdf_command:    <%= node[:clsi][:binaries][:dvipdf] %>
