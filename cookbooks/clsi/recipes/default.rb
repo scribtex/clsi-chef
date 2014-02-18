@@ -128,6 +128,7 @@ gem_package "rack" do
   version "1.1.3"
 end
 gem_package "mysql"
+gem_package "json"
 
 gem_package "rake" do
   version "0.9.2.2"
@@ -140,7 +141,9 @@ end
 gem_package "mysql" do
   gem_binary node[:ruby_enterprise][:gem_binary]
 end
-
+gem_package "json" do
+  gem_binary node[:ruby_enterprise][:gem_binary]
+end
 
 deploy_revision node[:clsi][:install_directory] do
   repo     "git://github.com/cvsintellect/clsi.git"
