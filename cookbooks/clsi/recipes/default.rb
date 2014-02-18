@@ -101,7 +101,7 @@ end
 
 node.default[:clsi][:binaries] = Hash[
   [
-    "pdflatex", "latex", "xelatex", "bibtex", "makeindex", "dvipdf", "dvips"
+    "pdflatex", "latex", "xelatex", "lualatex", "bibtex", "makeindex", "dvipdf", "dvips"
   ].map{ |n|
     [n, "#{binary_path}#{n}"]
   }
@@ -128,6 +128,7 @@ gem_package "rack" do
   version "1.1.3"
 end
 gem_package "mysql"
+gem_package "json"
 
 gem_package "rake" do
   version "0.9.2.2"
@@ -140,11 +141,13 @@ end
 gem_package "mysql" do
   gem_binary node[:ruby_enterprise][:gem_binary]
 end
-
+gem_package "json" do
+  gem_binary node[:ruby_enterprise][:gem_binary]
+end
 
 deploy_revision node[:clsi][:install_directory] do
-  repo     "git://github.com/scribtex/clsi.git"
-  revision "v1.1.6"
+  repo     "git://github.com/cvsintellect/clsi.git"
+  revision "v1.1.7"
   user     node[:clsi][:user]
 
   environment ({
